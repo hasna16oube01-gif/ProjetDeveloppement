@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    font-family: 'Nunito', sans-serif;
+  }
+  body {
+    @apply bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl transition-all duration-200 active:scale-95 shadow-lg shadow-blue-200;
+  }
+  .btn-secondary {
+    @apply bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-2xl transition-all duration-200 active:scale-95 shadow-lg shadow-purple-200;
+  }
+  .btn-success {
+    @apply bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-2xl transition-all duration-200 active:scale-95 shadow-lg shadow-green-200;
+  }
+  .card {
+    @apply bg-white rounded-3xl shadow-lg p-6;
+  }
+  .input-field {
+    @apply w-full border-2 border-gray-200 focus:border-blue-400 rounded-2xl px-4 py-3 text-gray-700 font-semibold outline-none transition-all;
+  }
+}
+
+/* Star animation */
+@keyframes starPop {
+  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(10deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.star-pop { animation: starPop 0.5s ease-out forwards; }
+
+/* Confetti */
+@keyframes confettiFall {
+  0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(600px) rotate(720deg); opacity: 0; }
+}
+.confetti { animation: confettiFall 2s ease-in forwards; }
+
+/* Pulse glow */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(79, 142, 247, 0.4); }
+  50% { box-shadow: 0 0 40px rgba(79, 142, 247, 0.8); }
+}
+.glow-pulse { animation: pulseGlow 2s ease-in-out infinite; }
