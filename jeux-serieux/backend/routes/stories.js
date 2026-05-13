@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const {
   createStory,
   getTeacherStories,
@@ -11,16 +11,17 @@ const {
 const { protect, teacherOnly } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-// Teacher routes
-router.post('/', protect, teacherOnly, upload.single('storyFile'), createStory);
-router.get('/teacher', protect, teacherOnly, getTeacherStories);
+// ── Enseignant ────────────────────────────────────────────────
+router.post('/',           protect, teacherOnly, upload.single('storyFile'), createStory);
+router.get('/teacher',     protect, teacherOnly, getTeacherStories);
 router.post('/:id/assign', protect, teacherOnly, assignStory);
-router.delete('/:id', protect, teacherOnly, deleteStory);
+router.delete('/:id',      protect, teacherOnly, deleteStory);
 
-// Student routes
+// ── Élève ─────────────────────────────────────────────────────
+// IMPORTANT : /student DOIT être AVANT /:id
 router.get('/student', protect, getStudentStories);
 
-// Shared
+// ── Partagé ───────────────────────────────────────────────────
 router.get('/:id', protect, getStoryById);
 
 module.exports = router;

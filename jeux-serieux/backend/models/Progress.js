@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+const answerSchema = new mongoose.Schema({
+  questionIndex:  { type: Number },
+  selectedAnswer: { type: mongoose.Schema.Types.Mixed }, // Number | Boolean | Array
+  isCorrect:      { type: Boolean },
+});
+
 const progressSchema = new mongoose.Schema(
   {
     student: {
@@ -13,22 +19,16 @@ const progressSchema = new mongoose.Schema(
       required: true,
     },
     listenCompleted: { type: Boolean, default: false },
-    answers: [
-      {
-        questionIndex: Number,
-        selectedAnswer: Number,
-        isCorrect: Boolean,
-      },
-    ],
-    score: { type: Number, default: 0 },
-    stars: { type: Number, default: 0 }, // 0-3
-    completed: { type: Boolean, default: false },
-    completedAt: { type: Date },
+    answers:         [answerSchema],
+    score:           { type: Number,  default: 0 },
+    stars:           { type: Number,  default: 0 },
+    completed:       { type: Boolean, default: false },
+    completedAt:     { type: Date },
   },
   { timestamps: true }
 );
 
-// Unique constraint: one progress per student per story
+// Un seul document de progression par élève par histoire
 progressSchema.index({ student: 1, story: 1 }, { unique: true });
 
 module.exports = mongoose.model('Progress', progressSchema);
