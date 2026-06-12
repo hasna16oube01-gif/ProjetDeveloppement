@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useState } from "react";
 import {
   FiLock, FiEye, FiEyeOff, FiUser, FiZap, FiBookOpen,
-  FiHash, FiLogIn, FiUserPlus, FiBarChart2, FiShield, FiChevronLeft,
+  FiHash, FiUserPlus, FiBarChart2, FiShield, FiChevronLeft,
 } from "react-icons/fi";
 import { BsRobot } from "react-icons/bs";
 
@@ -175,7 +175,12 @@ export default function LoginPage() {
                   <span className="text-white/40 text-xs">ou</span>
                   <div className="flex-1 h-px bg-white/15" />
                 </div>
-                <button className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all">
+
+                {/* Créer un compte enseignant */}
+                <button
+                  onClick={() => navigate('/register')}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all"
+                >
                   <FiUserPlus className="w-4 h-4" />
                   Créer un compte enseignant
                 </button>
@@ -225,9 +230,14 @@ export default function LoginPage() {
                   <span className="text-white/40 text-xs">ou</span>
                   <div className="flex-1 h-px bg-white/15" />
                 </div>
-                <button className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all">
-                  <FiLogIn className="w-4 h-4" />
-                  Se connecter avec mon compte
+
+                {/* Créer un compte pour les élèves qui n'en ont pas encore */}
+                <button
+                  onClick={() => navigate('/register')}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all"
+                >
+                  <FiUserPlus className="w-4 h-4" />
+                  Créer un compte
                 </button>
               </div>
             )}
