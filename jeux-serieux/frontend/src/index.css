@@ -50,3 +50,78 @@
   50% { box-shadow: 0 0 40px rgba(79, 142, 247, 0.8); }
 }
 .glow-pulse { animation: pulseGlow 2s ease-in-out infinite; }
+
+/* =========================================================
+   THÈME "MAGICAL" — à coller dans src/index.css
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+:root {
+  --panel-bg:     rgba(33, 26, 58, 0.82);
+  --panel-border: rgba(173, 156, 224, 0.22);
+  --input-bg:     rgba(18, 14, 36, 0.55);
+  --input-border: rgba(150, 132, 206, 0.30);
+  --accent-1:     #8E80F2;
+  --accent-2:     #5E4FDD;
+  --text-strong:  #EDE7FB;
+  --text-soft:    #C5BBE4;
+  --text-muted:   #A99FCB;
+}
+
+.font-fredoka { font-family: 'Fredoka', sans-serif; }
+
+/* --- Fond plein écran (mettre teacher-bg.png dans /public) --- */
+.teacher-bg {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(12, 8, 28, 0.20), rgba(12, 8, 28, 0.45)),
+    url('/teacher-bg.png') center top / cover no-repeat fixed;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text-strong);
+}
+
+/* --- Panneau "verre" (remplace .card) --- */
+.card {
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid var(--panel-border);
+  border-radius: 28px;
+  box-shadow: 0 24px 70px rgba(8, 5, 25, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 1.75rem;
+  color: var(--text-strong);
+}
+
+/* --- Bouton principal (dégradé) --- */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff;
+  font-family: 'Fredoka', sans-serif; font-weight: 600;
+  padding: 0.8rem 1.5rem; border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(94, 79, 221, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform .15s, filter .15s;
+}
+.btn-primary:hover  { filter: brightness(1.07); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+
+/* --- Champs de saisie / select --- */
+.input-field {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 16px;
+  padding: 0.9rem 1.1rem;
+  color: var(--text-strong);
+  font-weight: 600;
+  outline: none;
+  color-scheme: dark;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input-field::placeholder { color: #8E83B4; font-weight: 500; }
+.input-field:focus {
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(142, 128, 242, 0.25);
+}
+.input-field option { background: #1b1533; color: var(--text-strong); }

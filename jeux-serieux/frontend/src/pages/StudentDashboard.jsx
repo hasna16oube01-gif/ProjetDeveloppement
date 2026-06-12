@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-
 export default function StudentDashboard() {
   const { user, logout } = useAuth();
   const [stories, setStories] = useState([]);

@@ -101,21 +101,27 @@ export default function TeacherDashboard() {
   // ── Badge statut ──────────────────────────────────────────
   const statusBadge = (status) => {
     const map = {
-      processing: { label: '⏳ En traitement', cls: 'bg-yellow-100 text-yellow-700' },
-      ready:      { label: '✅ Prête',         cls: 'bg-green-100 text-green-700' },
-      error:      { label: '❌ Erreur',         cls: 'bg-red-100 text-red-700' },
+      processing: { label: '⏳ En traitement', cls: 'bg-yellow-400/15 text-yellow-200 border border-yellow-300/25' },
+      ready:      { label: '✅ Prête',          cls: 'bg-emerald-400/15 text-emerald-200 border border-emerald-300/25' },
+      error:      { label: '❌ Erreur',          cls: 'bg-red-400/15 text-red-200 border border-red-300/25' },
     };
     const s = map[status] || map.processing;
     return (
-      <span className={`text-xs font-bold px-2 py-1 rounded-full ${s.cls}`}>
+      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${s.cls}`}>
         {s.label}
       </span>
     );
   };
 
+  // Styles inline réutilisés
+  const tabActive   = { background: 'linear-gradient(135deg,#8E80F2,#5E4FDD)', boxShadow: '0 10px 26px rgba(94,79,221,0.45), inset 0 1px 0 rgba(255,255,255,0.25)' };
+  const tabInactive = { background: 'rgba(26,20,46,0.94)', border: '1px solid rgba(180,165,225,0.18)' };
+  const chipBase    = { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(180,165,225,0.18)' };
+  const chipSel     = { background: 'rgba(157,140,246,0.16)', border: '2px solid #9D8CF6', boxShadow: '0 0 0 3px rgba(157,140,246,0.25), 0 0 22px rgba(157,140,246,0.45)' };
+
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-4xl animate-bounce">⏳</div>
+    <div className="teacher-bg flex items-center justify-center">
+      <div className="text-5xl animate-bounce">⏳</div>
     </div>
   );
 
@@ -125,29 +131,30 @@ export default function TeacherDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="teacher-bg p-4 md:p-6">
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-fredoka text-blue-700">
-              👩‍🏫 Bonjour, {user.name} !
+            <h1 className="text-3xl md:text-4xl font-fredoka font-bold text-[var(--text-strong)] flex items-center gap-2 drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]">
+              👩‍🏫 Bonjour, {user.name} ! <span className="text-yellow-300/90">✨</span>
             </h1>
-            <p className="text-gray-500 font-semibold">
+            <p className="text-[var(--text-soft)] font-semibold mt-1">
               {stories.length} histoire(s) · {classes.length} classe(s)
             </p>
           </div>
           <button
             onClick={logout}
-            className="text-gray-400 hover:text-red-400 font-bold transition-colors"
+            className="font-fredoka font-medium text-[#D7CFF2] px-4 py-2 rounded-full transition-all hover:brightness-110"
+            style={{ background: 'rgba(26,20,46,0.6)', border: '1px solid rgba(180,165,225,0.22)' }}
           >
             🚪 Déconnexion
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-3 mb-6">
           {[
             { id: 'stories', label: '📚 Histoires' },
             { id: 'classes', label: '👥 Classes' },
@@ -155,11 +162,10 @@ export default function TeacherDashboard() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`font-bold px-5 py-2 rounded-2xl transition-all ${
-                tab === t.id
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'bg-white text-gray-500 hover:bg-gray-50'
+              className={`font-fredoka font-semibold px-6 py-2.5 rounded-full transition-all ${
+                tab === t.id ? 'text-white' : 'text-[#CFC6EC]'
               }`}
+              style={tab === t.id ? tabActive : tabInactive}
             >
               {t.label}
             </button>
@@ -170,7 +176,8 @@ export default function TeacherDashboard() {
         <AnimatePresence>
           {message && (
             <motion.div
-              className="bg-blue-50 border-2 border-blue-200 text-blue-700 font-bold p-4 rounded-2xl mb-4 text-center"
+              className="font-bold p-4 rounded-2xl mb-4 text-center text-[#E7E0FA]"
+              style={{ background: 'rgba(142,128,242,0.14)', border: '1px solid rgba(157,140,246,0.35)' }}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -178,7 +185,7 @@ export default function TeacherDashboard() {
               {message}
               <button
                 onClick={() => setMessage('')}
-                className="ml-3 text-blue-400 hover:text-blue-700"
+                className="ml-3 text-[#B9AEE0] hover:text-white"
               >
                 ✕
               </button>
@@ -202,17 +209,17 @@ export default function TeacherDashboard() {
             <AnimatePresence>
               {showUpload && (
                 <motion.div
-                  className="card mb-6 border-2 border-blue-200"
+                  className="card mb-6"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                 >
-                  <h2 className="text-xl font-fredoka text-blue-600 mb-4">
+                  <h2 className="text-2xl font-fredoka font-semibold text-[var(--text-strong)] mb-5">
                     📤 Uploader une histoire
                   </h2>
-                  <form onSubmit={handleUpload} className="space-y-4">
+                  <form onSubmit={handleUpload} className="space-y-5">
                     <div>
-                      <label className="block font-bold text-gray-600 mb-1">Titre</label>
+                      <label className="block font-bold text-[#CFC6EC] mb-2">Titre</label>
                       <input
                         className="input-field"
                         placeholder="Ex : Le lion et la souris"
@@ -221,53 +228,68 @@ export default function TeacherDashboard() {
                         required
                       />
                     </div>
+
                     <div>
-                      <label className="block font-bold text-gray-600 mb-2">
+                      <label className="block font-bold text-[#CFC6EC] mb-2">
                         Icône de couverture
                       </label>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-3 flex-wrap">
                         {EMOJIS.map((em) => (
                           <button
                             key={em}
                             type="button"
                             onClick={() => setForm({ ...form, coverEmoji: em })}
-                            className={`text-2xl p-2 rounded-xl transition-all ${
-                              form.coverEmoji === em
-                                ? 'bg-blue-100 ring-2 ring-blue-400 scale-125'
-                                : 'hover:bg-gray-100'
-                            }`}
+                            className="text-3xl rounded-2xl transition-all flex items-center justify-center"
+                            style={{ width: 58, height: 58, ...(form.coverEmoji === em ? chipSel : chipBase) }}
                           >
                             {em}
                           </button>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <label className="block font-bold text-gray-600 mb-1">Difficulté</label>
-                      <select
-                        className="input-field"
-                        value={form.difficulty}
-                        onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
-                      >
-                        <option value="easy">🟢 Facile</option>
-                        <option value="medium">🟡 Moyen</option>
-                        <option value="hard">🔴 Difficile</option>
-                      </select>
+
+                    <div className="grid md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block font-bold text-[#CFC6EC] mb-2">Difficulté</label>
+                        <select
+                          className="input-field"
+                          value={form.difficulty}
+                          onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
+                        >
+                          <option value="easy">🟢 Facile</option>
+                          <option value="medium">🟡 Moyen</option>
+                          <option value="hard">🔴 Difficile</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-bold text-[#CFC6EC] mb-2">
+                          Fichier texte (.txt)
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            className="font-fredoka font-medium px-5 py-2.5 rounded-xl text-[#D9D2F7] transition-all hover:brightness-110 whitespace-nowrap"
+                            style={{ background: 'rgba(142,128,242,0.18)', border: '1px solid rgba(157,140,246,0.40)' }}
+                          >
+                            Choisir un fichier
+                          </button>
+                          <span className="text-[var(--text-muted)] text-sm truncate">
+                            {file ? file.name : "Aucun fichier n'a été sélectionné"}
+                          </span>
+                          <input
+                            ref={fileRef}
+                            type="file"
+                            accept=".txt"
+                            className="hidden"
+                            onChange={(e) => setFile(e.target.files[0])}
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block font-bold text-gray-600 mb-1">
-                        Fichier texte (.txt)
-                      </label>
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept=".txt"
-                        className="block w-full text-gray-600 font-semibold file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-100 file:text-blue-700 file:font-bold hover:file:bg-blue-200 cursor-pointer"
-                        onChange={(e) => setFile(e.target.files[0])}
-                        required
-                      />
-                    </div>
-                    <div className="flex gap-3">
+
+                    <div className="flex gap-4 pt-1">
                       <motion.button
                         type="submit"
                         className="btn-primary flex-1"
@@ -279,7 +301,8 @@ export default function TeacherDashboard() {
                       <button
                         type="button"
                         onClick={() => setShowUpload(false)}
-                        className="bg-gray-100 text-gray-600 font-bold px-4 py-2 rounded-2xl hover:bg-gray-200"
+                        className="font-fredoka font-medium text-[#E7E0FA] px-7 rounded-2xl transition-all hover:brightness-110"
+                        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)' }}
                       >
                         Annuler
                       </button>
@@ -292,10 +315,16 @@ export default function TeacherDashboard() {
             {/* Grille des histoires */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {stories.length === 0 && (
-                <div className="col-span-3 card text-center py-12">
-                  <div className="text-6xl mb-4">📭</div>
-                  <p className="text-gray-400 font-bold text-lg">Aucune histoire créée</p>
-                  <p className="text-gray-400">
+                <div className="col-span-full card text-center py-12">
+                  <img
+                    src="/empty-book.png"
+                    alt=""
+                    className="w-44 mx-auto mb-3 drop-shadow-[0_0_25px_rgba(180,150,255,0.35)]"
+                  />
+                  <p className="text-[var(--text-strong)] font-fredoka font-semibold text-2xl">
+                    Aucune histoire créée
+                  </p>
+                  <p className="text-[var(--text-muted)] mt-1">
                     Cliquez sur "Nouvelle histoire" pour commencer !
                   </p>
                 </div>
@@ -307,7 +336,7 @@ export default function TeacherDashboard() {
                 return (
                   <motion.div
                     key={story._id}
-                    className="card hover:shadow-xl transition-shadow"
+                    className="card hover:brightness-110 transition-all"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
@@ -315,26 +344,26 @@ export default function TeacherDashboard() {
                       <span className="text-4xl">{story.coverEmoji}</span>
                       {statusBadge(story.status)}
                     </div>
-                    <h3 className="font-black text-gray-800 text-lg mb-1">{story.title}</h3>
-                    <p className="text-gray-400 text-sm font-semibold mb-1">
+                    <h3 className="font-fredoka font-bold text-[var(--text-strong)] text-lg mb-1">{story.title}</h3>
+                    <p className="text-[var(--text-muted)] text-sm font-semibold mb-1">
                       {new Date(story.createdAt).toLocaleDateString('fr-FR')}
                     </p>
-                    <p className="text-blue-500 text-sm font-bold mb-3">
+                    <p className="text-[#A99CF2] text-sm font-bold mb-3">
                       👥 {assignedCount} assignation(s)
                     </p>
 
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-3 flex-wrap items-center">
                       {story.status === 'ready' && (
                         <>
                           <a
                             href={`/story/${story._id}`}
-                            className="text-blue-500 font-bold text-sm hover:underline"
+                            className="text-[#A99CF2] font-bold text-sm hover:underline"
                           >
                             👁 Voir
                           </a>
                           <button
                             onClick={() => setAssignModal(story)}
-                            className="text-green-600 font-bold text-sm hover:underline"
+                            className="text-emerald-300 font-bold text-sm hover:underline"
                           >
                             📤 Assigner
                           </button>
@@ -342,7 +371,7 @@ export default function TeacherDashboard() {
                       )}
                       <button
                         onClick={() => deleteStory(story._id)}
-                        className="text-red-400 font-bold text-sm hover:text-red-600 ml-auto"
+                        className="text-red-300/80 font-bold text-sm hover:text-red-300 ml-auto"
                       >
                         🗑 Suppr.
                       </button>
@@ -360,8 +389,8 @@ export default function TeacherDashboard() {
         {tab === 'classes' && (
           <div>
             <div className="card mb-6">
-              <h2 className="text-xl font-fredoka text-blue-600 mb-4">➕ Créer une classe</h2>
-              <div className="flex gap-3">
+              <h2 className="text-2xl font-fredoka font-semibold text-[var(--text-strong)] mb-5">➕ Créer une classe</h2>
+              <div className="flex gap-4">
                 <input
                   className="input-field flex-1"
                   placeholder="Ex : CP - Classe de Mme Martin"
@@ -369,7 +398,7 @@ export default function TeacherDashboard() {
                   onChange={(e) => setClassName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && createClass()}
                 />
-                <button onClick={createClass} className="btn-primary whitespace-nowrap">
+                <button onClick={createClass} className="btn-primary whitespace-nowrap px-8">
                   Créer
                 </button>
               </div>
@@ -379,12 +408,15 @@ export default function TeacherDashboard() {
               {classes.map((cls) => (
                 <div key={cls._id} className="card">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xl font-fredoka text-gray-800">{cls.name}</h3>
-                    <span className="bg-blue-100 text-blue-700 font-black px-3 py-1 rounded-full text-sm">
+                    <h3 className="text-xl font-fredoka font-semibold text-[var(--text-strong)]">{cls.name}</h3>
+                    <span
+                      className="font-black px-3 py-1 rounded-full text-sm text-[#CFC6EC]"
+                      style={{ background: 'rgba(142,128,242,0.16)', border: '1px solid rgba(157,140,246,0.35)' }}
+                    >
                       Code : {cls.joinCode}
                     </span>
                   </div>
-                  <p className="text-gray-500 font-semibold mb-3">
+                  <p className="text-[var(--text-soft)] font-semibold mb-3">
                     👥 {cls.students.length} élève(s)
                   </p>
                   {cls.students.length > 0 && (
@@ -392,11 +424,12 @@ export default function TeacherDashboard() {
                       {cls.students.map((s) => (
                         <div
                           key={s._id}
-                          className="flex items-center gap-2 bg-gray-50 rounded-xl p-2"
+                          className="flex items-center gap-2 rounded-xl p-2"
+                          style={{ background: 'rgba(18,14,36,0.45)', border: '1px solid rgba(150,132,206,0.18)' }}
                         >
                           <span>{s.avatar}</span>
-                          <span className="font-bold text-gray-700">{s.name}</span>
-                          <span className="ml-auto text-yellow-500 font-bold text-sm">
+                          <span className="font-bold text-[var(--text-strong)]">{s.name}</span>
+                          <span className="ml-auto text-yellow-300 font-bold text-sm">
                             ⭐ {s.totalStars}
                           </span>
                         </div>
@@ -406,9 +439,10 @@ export default function TeacherDashboard() {
                 </div>
               ))}
               {classes.length === 0 && (
-                <div className="col-span-2 card text-center py-10">
-                  <div className="text-5xl mb-3">🏫</div>
-                  <p className="text-gray-400 font-bold">Aucune classe créée</p>
+                <div className="col-span-full card text-center py-12">
+                  <div className="text-6xl mb-3">🏫</div>
+                  <p className="text-[var(--text-strong)] font-fredoka font-semibold text-2xl">Aucune classe créée</p>
+                  <p className="text-[var(--text-muted)] mt-1">Créez votre première classe pour commencer !</p>
                 </div>
               )}
             </div>
@@ -422,14 +456,19 @@ export default function TeacherDashboard() {
       <AnimatePresence>
         {assignModal && (
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/55 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={(e) => e.target === e.currentTarget && setAssignModal(null)}
           >
             <motion.div
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto"
+              className="rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto"
+              style={{
+                background: 'rgba(28,22,50,0.95)',
+                backdropFilter: 'blur(16px) saturate(120%)',
+                border: '1px solid rgba(173,156,224,0.22)',
+              }}
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
@@ -477,16 +516,17 @@ function AssignModal({ story, classes, allStudents, onAssign, onClose }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-fredoka text-gray-800">
+          <h2 className="text-2xl font-fredoka font-semibold text-[var(--text-strong)]">
             📤 Assigner l'histoire
           </h2>
-          <p className="text-gray-500 font-semibold text-sm">
+          <p className="text-[var(--text-soft)] font-semibold text-sm">
             {story.coverEmoji} {story.title}
           </p>
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 font-black text-xl w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100"
+          className="text-[#B9AEE0] hover:text-white font-black text-xl w-9 h-9 flex items-center justify-center rounded-xl transition-all"
+          style={{ background: 'rgba(255,255,255,0.06)' }}
         >
           ✕
         </button>
@@ -495,7 +535,7 @@ function AssignModal({ story, classes, allStudents, onAssign, onClose }) {
       {/* Assigner à des classes */}
       {classes.length > 0 && (
         <div className="mb-6">
-          <h3 className="font-black text-gray-700 mb-3">🏫 Assigner à une classe entière</h3>
+          <h3 className="font-black text-[var(--text-strong)] mb-3">🏫 Assigner à une classe entière</h3>
           <div className="space-y-2">
             {classes.map((cls) => {
               const selected = selectedClasses.includes(cls._id);
@@ -503,19 +543,21 @@ function AssignModal({ story, classes, allStudents, onAssign, onClose }) {
                 <button
                   key={cls._id}
                   onClick={() => toggleClass(cls._id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 font-bold text-left transition-all ${
-                    selected
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-blue-200 hover:bg-blue-50'
-                  }`}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl font-bold text-left transition-all"
+                  style={selected
+                    ? { border: '2px solid #8E80F2', background: 'rgba(142,128,242,0.15)', color: '#E7E0FA' }
+                    : { border: '2px solid rgba(150,132,206,0.22)', background: 'rgba(18,14,36,0.35)', color: '#C5BBE4' }}
                 >
-                  <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    selected ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300'
-                  }`}>
+                  <span
+                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm"
+                    style={selected
+                      ? { background: '#8E80F2', border: '2px solid #8E80F2' }
+                      : { border: '2px solid rgba(150,132,206,0.4)' }}
+                  >
                     {selected && '✓'}
                   </span>
                   <span>{cls.name}</span>
-                  <span className="ml-auto text-gray-400 font-semibold text-sm">
+                  <span className="ml-auto text-[var(--text-muted)] font-semibold text-sm">
                     {cls.students.length} élève(s)
                   </span>
                 </button>
@@ -528,28 +570,30 @@ function AssignModal({ story, classes, allStudents, onAssign, onClose }) {
       {/* Assigner à des élèves individuellement */}
       {allStudents.length > 0 && (
         <div className="mb-6">
-          <h3 className="font-black text-gray-700 mb-3">👤 Assigner à des élèves individuels</h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <h3 className="font-black text-[var(--text-strong)] mb-3">👤 Assigner à des élèves individuels</h3>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
             {allStudents.map((student) => {
               const selected = selectedStudents.includes(student._id);
               return (
                 <button
                   key={student._id}
                   onClick={() => toggleStudent(student._id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 font-bold text-left transition-all ${
-                    selected
-                      ? 'border-purple-500 bg-purple-50 text-purple-700'
-                      : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50'
-                  }`}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl font-bold text-left transition-all"
+                  style={selected
+                    ? { border: '2px solid #C58AF0', background: 'rgba(197,138,240,0.15)', color: '#F0E4FA' }
+                    : { border: '2px solid rgba(150,132,206,0.22)', background: 'rgba(18,14,36,0.35)', color: '#C5BBE4' }}
                 >
-                  <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    selected ? 'bg-purple-500 border-purple-500 text-white' : 'border-gray-300'
-                  }`}>
+                  <span
+                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm"
+                    style={selected
+                      ? { background: '#C58AF0', border: '2px solid #C58AF0' }
+                      : { border: '2px solid rgba(150,132,206,0.4)' }}
+                  >
                     {selected && '✓'}
                   </span>
                   <span>{student.avatar}</span>
                   <span>{student.name}</span>
-                  <span className="ml-auto text-gray-400 font-semibold text-sm">
+                  <span className="ml-auto text-[var(--text-muted)] font-semibold text-sm">
                     {student.className}
                   </span>
                 </button>
@@ -563,8 +607,8 @@ function AssignModal({ story, classes, allStudents, onAssign, onClose }) {
       {classes.length === 0 && allStudents.length === 0 && (
         <div className="text-center py-8">
           <div className="text-4xl mb-3">😕</div>
-          <p className="text-gray-500 font-bold">Aucune classe ni élève disponible.</p>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-[var(--text-soft)] font-bold">Aucune classe ni élève disponible.</p>
+          <p className="text-[var(--text-muted)] text-sm mt-1">
             Crée d'abord une classe dans l'onglet "Classes".
           </p>
         </div>
@@ -572,7 +616,10 @@ function AssignModal({ story, classes, allStudents, onAssign, onClose }) {
 
       {/* Résumé sélection */}
       {(selectedStudents.length > 0 || selectedClasses.length > 0) && (
-        <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-3 mb-4 text-sm font-bold text-green-700">
+        <div
+          className="rounded-2xl p-3 mb-4 text-sm font-bold text-emerald-200"
+          style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.30)' }}
+        >
           ✅ {selectedClasses.length} classe(s) + {selectedStudents.length} élève(s) sélectionné(s)
         </div>
       )}
@@ -581,18 +628,15 @@ function AssignModal({ story, classes, allStudents, onAssign, onClose }) {
       <div className="flex gap-3">
         <button
           onClick={onClose}
-          className="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl hover:bg-gray-200 transition-all"
+          className="flex-1 font-fredoka font-medium text-[#E7E0FA] py-3 rounded-2xl transition-all hover:brightness-110"
+          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)' }}
         >
           Annuler
         </button>
         <motion.button
           onClick={handleSubmit}
           disabled={selectedStudents.length === 0 && selectedClasses.length === 0}
-          className={`flex-1 btn-primary ${
-            selectedStudents.length === 0 && selectedClasses.length === 0
-              ? 'opacity-50 cursor-not-allowed'
-              : ''
-          }`}
+          className="flex-1 btn-primary"
           whileTap={{ scale: 0.95 }}
         >
           ✅ Confirmer l'assignation
