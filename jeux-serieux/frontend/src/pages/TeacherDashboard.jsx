@@ -17,9 +17,25 @@ export default function TeacherDashboard() {
   const [className, setClassName] = useState('');
   const [assignModal, setAssignModal] = useState(null); // story en cours d'assignation
   const fileRef = useRef();
+  const [emojiPage, setEmojiPage] = useState(0);
   const pollingRef = useRef();
 
-  const EMOJIS = ['📖', '🦁', '🌊', '🚀', '🏰', '🌺', '🐉', '⚡'];
+  const EMOJIS = [
+  // 📖 Histoire & Magie
+  '📖', '🏰', '🐉', '⚡', '🧙‍♂️', '🧚‍♀️', '🦄', '🔮', '👑', '📜', '🗝️', '💎',
+  
+  // 🦁 Animaux & Créatures
+  '🦁', '🦉', '🦊', '🐺', '🦅', '🐙', '🐢', '🦕', '🦈', '🦋', '🐝', '🐧',
+  
+  // 🌍 Nature & Éléments
+  '🌊', '🌺', '🌈', '🔥', '🍄', '🌲', '🌙', '☀️', '❄️', '🌋', '🍁', '🍀',
+  
+  // 🚀 Aventure & Découverte
+  '🚀', '🗺️', '🧭', '⛵', '🛸', '🤖', '🏕️', '🛡️', '⚔️', '🪐', '🌟', '🔭',
+  
+  // 🎨 Créativité & Apprentissage
+  '🎨', '🧩', '🎭', '💡', '🔬', '📐', '📚', '🏆', '🎯', '🏅', '🥇', '🚀'
+];
 
   // ── Chargement ────────────────────────────────────────────
   const loadStories = async () => {
@@ -83,11 +99,11 @@ export default function TeacherDashboard() {
   const assignStory = async (storyId, studentIds, classIds) => {
     try {
       await api.post(`/stories/${storyId}/assign`, { studentIds, classIds });
-      setMessage('✅ Histoire assignée avec succès !');
+      setMessage(' Histoire assignée avec succès !');
       setAssignModal(null);
       loadStories();
     } catch (err) {
-      setMessage('❌ Erreur lors de l\'assignation');
+      setMessage(' Erreur lors de l\'assignation');
     }
   };
 
@@ -130,6 +146,13 @@ export default function TeacherDashboard() {
     c.students.map((s) => ({ ...s, className: c.name, classId: c._id }))
   );
 
+  // ── Pagination des emojis ─────────────────────────────────
+  const EMOJIS_PER_PAGE = 24; // 12 colonnes × 2 lignes
+  const totalEmojiPages = Math.ceil(EMOJIS.length / EMOJIS_PER_PAGE);
+  const visibleEmojis = EMOJIS.slice(
+  emojiPage * EMOJIS_PER_PAGE,
+  emojiPage * EMOJIS_PER_PAGE + EMOJIS_PER_PAGE
+  );
   return (
     <div className="teacher-bg p-4 md:p-6">
       <div className="max-w-5xl mx-auto">
@@ -149,7 +172,7 @@ export default function TeacherDashboard() {
             className="font-fredoka font-medium text-[#D7CFF2] px-4 py-2 rounded-full transition-all hover:brightness-110"
             style={{ background: 'rgba(26,20,46,0.6)', border: '1px solid rgba(180,165,225,0.22)' }}
           >
-            🚪 Déconnexion
+             Déconnexion
           </button>
         </div>
 
@@ -215,7 +238,7 @@ export default function TeacherDashboard() {
                   exit={{ opacity: 0, height: 0 }}
                 >
                   <h2 className="text-2xl font-fredoka font-semibold text-[var(--text-strong)] mb-5">
-                    📤 Uploader une histoire
+                     Uploader une histoire
                   </h2>
                   <form onSubmit={handleUpload} className="space-y-5">
                     <div>
@@ -230,23 +253,66 @@ export default function TeacherDashboard() {
                     </div>
 
                     <div>
-                      <label className="block font-bold text-[#CFC6EC] mb-2">
-                        Icône de couverture
-                      </label>
-                      <div className="flex gap-3 flex-wrap">
-                        {EMOJIS.map((em) => (
-                          <button
-                            key={em}
-                            type="button"
-                            onClick={() => setForm({ ...form, coverEmoji: em })}
-                            className="text-3xl rounded-2xl transition-all flex items-center justify-center"
-                            style={{ width: 58, height: 58, ...(form.coverEmoji === em ? chipSel : chipBase) }}
-                          >
-                            {em}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+  <label className="block font-bold text-[#CFC6EC] mb-2">
+    Icône de couverture
+  </label>
+
+  <div className="flex items-center gap-2">
+    {/* Flèche gauche */}
+    <button
+      type="button"
+      onClick={() => setEmojiPage((p) => Math.max(0, p - 1))}
+      disabled={emojiPage === 0}
+      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-2xl text-[#D9D2F7] transition-all hover:brightness-125 disabled:opacity-30 disabled:cursor-not-allowed"
+      style={{ background: 'rgba(142,128,242,0.18)', border: '1px solid rgba(157,140,246,0.40)' }}
+    >
+      ‹
+    </button>
+
+    {/* Grille : 12 colonnes × 2 lignes max */}
+    <div className="grid grid-cols-12 gap-2 flex-1">
+      {visibleEmojis.map((em, i) => (
+        <button
+          key={emojiPage * EMOJIS_PER_PAGE + i}
+          type="button"
+          onClick={() => setForm({ ...form, coverEmoji: em })}
+          className="text-2xl md:text-3xl rounded-2xl transition-all flex items-center justify-center aspect-square w-full"
+          style={form.coverEmoji === em ? chipSel : chipBase}
+        >
+          {em}
+        </button>
+      ))}
+    </div>
+
+    {/* Flèche droite */}
+    <button
+      type="button"
+      onClick={() => setEmojiPage((p) => Math.min(totalEmojiPages - 1, p + 1))}
+      disabled={emojiPage >= totalEmojiPages - 1}
+      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-2xl text-[#D9D2F7] transition-all hover:brightness-125 disabled:opacity-30 disabled:cursor-not-allowed"
+      style={{ background: 'rgba(142,128,242,0.18)', border: '1px solid rgba(157,140,246,0.40)' }}
+    >
+      ›
+    </button>
+  </div>
+
+  {/* Points indicateurs de page */}
+  <div className="flex justify-center gap-1.5 mt-3">
+    {Array.from({ length: totalEmojiPages }).map((_, i) => (
+      <button
+        key={i}
+        type="button"
+        onClick={() => setEmojiPage(i)}
+        className="rounded-full transition-all"
+        style={{
+          width: i === emojiPage ? 22 : 8,
+          height: 8,
+          background: i === emojiPage ? '#9D8CF6' : 'rgba(180,165,225,0.30)',
+        }}
+      />
+    ))}
+  </div>
+</div>
 
                     <div className="grid md:grid-cols-2 gap-5">
                       <div>
@@ -296,7 +362,7 @@ export default function TeacherDashboard() {
                         disabled={uploading}
                         whileTap={{ scale: 0.95 }}
                       >
-                        {uploading ? '🤖 L\'IA travaille...' : '🚀 Envoyer à l\'IA'}
+                        {uploading ? '🤖 L\'IA travaille...' : ' Envoyer à l\'IA'}
                       </motion.button>
                       <button
                         type="button"

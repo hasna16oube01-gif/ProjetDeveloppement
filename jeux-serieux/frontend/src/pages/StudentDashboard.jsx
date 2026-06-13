@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
+
 export default function StudentDashboard() {
   const { user, logout } = useAuth();
   const [stories, setStories] = useState([]);
@@ -76,7 +77,7 @@ export default function StudentDashboard() {
             className="font-fredoka font-medium text-[#D7CFF2] px-4 py-2 rounded-full transition-all hover:brightness-110"
             style={{ background: 'rgba(26,20,46,0.6)', border: '1px solid rgba(180,165,225,0.22)' }}
           >
-            🚪 Sortir
+            Deconnexion 
           </button>
         </motion.div>
 
