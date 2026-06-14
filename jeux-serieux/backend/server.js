@@ -4,10 +4,12 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-const authRoutes     = require('./routes/auth');
-const storyRoutes    = require('./routes/stories');
-const classRoutes    = require('./routes/classes');
-const progressRoutes = require('./routes/progress');
+const authRoutes       = require('./routes/auth');
+const storyRoutes      = require('./routes/stories');
+const classRoutes      = require('./routes/classes');
+const progressRoutes   = require('./routes/progress');
+const assignmentRoutes = require('./routes/assignmentRoutes');
+const dashboardRoutes  = require('./routes/dashboardRoutes');
 
 const app = express();
 
@@ -21,10 +23,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/audio',   express.static(path.join(__dirname, 'audio')));
 
 // ── Routes ────────────────────────────────────────────────────
-app.use('/api/auth',     authRoutes);
-app.use('/api/stories',  storyRoutes);
-app.use('/api/classes',  classRoutes);
-app.use('/api/progress', progressRoutes);
+app.use('/api/auth',        authRoutes);
+app.use('/api/stories',    storyRoutes);
+app.use('/api/classes',    classRoutes);
+app.use('/api/progress',   progressRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/dashboard',   dashboardRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

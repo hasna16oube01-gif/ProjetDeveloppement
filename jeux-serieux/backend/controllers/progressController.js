@@ -1,111 +1,152 @@
-const Progress = require('../models/Progress');
-const Story    = require('../models/Story');
-const User     = require('../models/User');
+const Progress   = require('../models/Progress');
+const Assignment = require('../models/Assignment');
+const User       = require('../models/User');
+const { gradeAnswer, computeStars } = require('../services/gameService');
+const { POINTS_PER_CORRECT, LEVEL_UNLOCK_RATIO } = require('../config/gameConfig');
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function checkAnswer(question, userAnswer) {
-  if (question.type === 'order_events') {
-    return JSON.stringify(userAnswer) === JSON.stringify(question.correctOrder);
-  }
-  // true_false → Boolean, mcq/fill_blank/odd_one_out → Number
-  // eslint-disable-next-line eqeqeq
-  return userAnswer == question.correctAnswer;
-}
-
-function buildResult(question, userAnswer) {
-  const isCorrect = checkAnswer(question, userAnswer);
-  const base = {
-    type:          question.type || 'mcq',
-    question:      question.question,
-    explanation:   question.explanation,
-    correctAnswer: question.correctAnswer,
-    userAnswer,
-    isCorrect,
-  };
-  if (question.type === 'order_events') {
-    return { ...base, events: question.events, correctOrder: question.correctOrder };
-  }
-  return { ...base, options: question.options };
-}
-
-// ── POST /api/progress/listen/:storyId ───────────────────────────────────────
-exports.markListened = async (req, res) => {
+// ── POST /api/progress/:assignmentId/submit  (élève) ─────────────────────────
+exports.submitAttempt = async (req, res) => {
   try {
-    const progress = await Progress.findOneAndUpdate(
-      { student: req.user._id, story: req.params.storyId },
-      { listenCompleted: true },
-      { upsert: true, new: true }
-    );
-    res.json(progress);
-  } catch (error) {
-    console.error('markListened error:', error.message);
-    res.status(500).json({ message: error.message });
-  }
-};
+    const { answers, listenCompleted } = req.body;
+    const { assignmentId } = req.params;
 
-// ── POST /api/progress/submit/:storyId ───────────────────────────────────────
-exports.submitQuiz = async (req, res) => {
-  try {
-    const { answers } = req.body;
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) return res.status(404).json({ message: 'Assignment introuvable' });
+    if (assignment.status !== 'ready') {
+      return res.status(400).json({ message: "Cet assignment n'est pas encore prêt" });
+    }
 
-    const story = await Story.findById(req.params.storyId);
-    if (!story) return res.status(404).json({ message: 'Histoire introuvable' });
+    // L'élève doit appartenir à la classe de l'assignment
+    if (!req.user.classId || req.user.classId.toString() !== assignment.classId.toString()) {
+      return res.status(403).json({ message: "Tu n'appartiens pas à la classe de cet assignment" });
+    }
 
-    // Correction
-    const gradedAnswers = answers.map((a) => {
-      const question   = story.questions[a.questionIndex];
-      const userAnswer = a.selectedAnswer;
+    // Niveau doit être débloqué
+    if (assignment.level > req.user.level) {
+      return res.status(403).json({ message: 'Ce niveau est verrouillé' });
+    }
+
+    // Récupérer ou créer le Progress
+    let progress = await Progress.findOne({ student: req.user._id, assignment: assignmentId });
+    if (!progress) {
+      progress = new Progress({
+        student:    req.user._id,
+        assignment: assignmentId,
+        objective:  assignment.objective,
+      });
+    }
+
+    if (!progress.canAttempt()) {
+      return res.status(400).json({ message: 'Déjà terminé, tu as utilisé tes 2 tentatives' });
+    }
+
+    const attemptNumber = progress.attempts.length + 1;
+
+    // Corriger chaque réponse
+    const gradedAnswers = (answers || []).map((a) => {
+      const question = assignment.questions[a.questionIndex];
       return {
         questionIndex:  a.questionIndex,
-        selectedAnswer: userAnswer,
-        isCorrect:      checkAnswer(question, userAnswer),
+        selectedAnswer: a.selectedAnswer,
+        isCorrect:      question ? gradeAnswer(question, a.selectedAnswer) : false,
       };
     });
 
-    const correctCount   = gradedAnswers.filter((a) => a.isCorrect).length;
-    const totalQuestions = story.questions.length;
-    const scorePercent   = Math.round((correctCount / totalQuestions) * 100);
+    const score        = gradedAnswers.filter((a) => a.isCorrect).length;
+    const total        = assignment.questions.length;
+    const stars        = computeStars(score);
+    const pointsEarned = score * POINTS_PER_CORRECT;
 
-    let stars = 0;
-    if (scorePercent >= 50)   stars = 1;
-    if (scorePercent >= 75)   stars = 2;
-    if (scorePercent === 100) stars = 3;
+    progress.attempts.push({
+      attemptNumber,
+      listenCompleted: !!listenCompleted,
+      answers:         gradedAnswers,
+      score,
+      stars,
+      submittedAt: new Date(),
+    });
 
-    // Sauvegarde
-    const progress = await Progress.findOneAndUpdate(
-      { student: req.user._id, story: req.params.storyId },
-      { answers: gradedAnswers, score: scorePercent, stars, completed: true, completedAt: new Date() },
-      { upsert: true, new: true }
-    );
+    // ── 1re tentative : on garde le suspense ──────────────────
+    if (attemptNumber === 1) {
+      await progress.save();
+      return res.json({
+        attemptNumber: 1,
+        score,
+        total,
+        canRetry:      true,
+        revealAnswers: false,
+        message: `Bravo ! Tu as ${score} bonne${score > 1 ? 's' : ''} réponse${score > 1 ? 's' : ''} sur ${total}. Réécoute bien l'histoire pour corriger tes erreurs !`,
+      });
+    }
 
-    // Mise à jour étoiles utilisateur
-    await User.findByIdAndUpdate(req.user._id, { $inc: { totalStars: stars } });
+    // ── 2e tentative : finaliser ──────────────────────────────
+    progress.score        = score;
+    progress.stars        = stars;
+    progress.pointsEarned = pointsEarned;
+    progress.completed    = true;
+    progress.completedAt  = new Date();
+    await progress.save();
 
-    // Badges
-    const badges = [];
-    if (scorePercent === 100) badges.push('⭐ Parfait !');
-    if (stars === 3)          badges.push('🏆 Champion !');
+    // Mettre à jour l'élève
+    const user = await User.findById(req.user._id);
+    user.totalPoints += pointsEarned;
+    user.totalStars  += stars;
 
-    // Résultats détaillés
-    const results = story.questions.map((q, i) =>
-      buildResult(q, gradedAnswers[i]?.selectedAnswer)
-    );
+    const prevLevelPts = user.levelPoints.get(String(assignment.level)) || 0;
+    user.levelPoints.set(String(assignment.level), prevLevelPts + pointsEarned);
 
-    res.json({ progress, results, badges, correctCount, totalQuestions, scorePercent, stars });
+    // Déblocage de niveau (seulement si l'élève est encore à ce niveau)
+    let levelUp  = false;
+    let newLevel = user.level;
+
+    if (user.level === assignment.level) {
+      const levelAssignments = await Assignment.find({
+        classId: req.user.classId,
+        level:   assignment.level,
+        status:  'ready',
+        active:  true,
+      });
+      const maxPts    = levelAssignments.length * 5 * POINTS_PER_CORRECT;
+      const earnedPts = user.levelPoints.get(String(assignment.level)) || 0;
+
+      if (maxPts > 0 && earnedPts >= LEVEL_UNLOCK_RATIO * maxPts) {
+        user.level = assignment.level + 1;
+        newLevel   = user.level;
+        levelUp    = true;
+      }
+    }
+
+    await user.save();
+
+    // Corrections (révélées seulement à la 2e tentative)
+    const corrections = assignment.questions.map((q, i) => {
+      const graded = gradedAnswers.find((a) => a.questionIndex === i);
+      const base = {
+        questionIndex: i,
+        isCorrect:     graded ? graded.isCorrect : false,
+        explanation:   q.explanation,
+      };
+      if (q.type === 'order_events') {
+        base.correctOrder = q.correctOrder;
+      } else {
+        base.correctAnswer = q.correctAnswer;
+      }
+      return base;
+    });
+
+    res.json({
+      attemptNumber: 2,
+      score,
+      total,
+      revealAnswers: true,
+      stars,
+      pointsEarned,
+      levelUp,
+      newLevel,
+      corrections,
+    });
   } catch (error) {
-    console.error('submitQuiz error:', error.message);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// ── GET /api/progress/story/:storyId  (enseignant) ───────────────────────────
-exports.getStoryProgress = async (req, res) => {
-  try {
-    const progresses = await Progress.find({ story: req.params.storyId })
-      .populate('student', 'name avatar email')
-      .sort({ completedAt: -1 });
-    res.json(progresses);
-  } catch (error) {
+    console.error('submitAttempt error:', error.message);
     res.status(500).json({ message: error.message });
   }
 };
@@ -114,7 +155,11 @@ exports.getStoryProgress = async (req, res) => {
 exports.getMyProgress = async (req, res) => {
   try {
     const progresses = await Progress.find({ student: req.user._id })
-      .populate('story', 'title coverEmoji')
+      .populate({
+        path:     'assignment',
+        select:   'objective level story',
+        populate: { path: 'story', select: 'title coverEmoji' },
+      })
       .sort({ updatedAt: -1 });
     res.json(progresses);
   } catch (error) {

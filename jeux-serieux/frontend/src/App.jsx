@@ -35,7 +35,7 @@ function AppRoutes() {
       <Route path="/student" element={
         <PrivateRoute role="student"><StudentDashboard /></PrivateRoute>
       } />
-      <Route path="/story/:id" element={
+      <Route path="/play/:id" element={
         <PrivateRoute><StoryPlayer /></PrivateRoute>
       } />
     </Routes>

@@ -1,16 +1,10 @@
 const express = require('express');
 const router  = express.Router();
-const {
-  markListened,
-  submitQuiz,
-  getStoryProgress,
-  getMyProgress,
-} = require('../controllers/progressController');
-const { protect, teacherOnly } = require('../middleware/auth');
+const { submitAttempt, getMyProgress } = require('../controllers/progressController');
+const { protect, studentOnly } = require('../middleware/auth');
 
-router.post('/listen/:storyId',  protect, markListened);
-router.post('/submit/:storyId',  protect, submitQuiz);
-router.get('/story/:storyId',    protect, teacherOnly, getStoryProgress);
-router.get('/me',                protect, getMyProgress);
+// ── Élève ─────────────────────────────────────────────────────
+router.post('/:assignmentId/submit', protect, studentOnly, submitAttempt);
+router.get('/me',                    protect, studentOnly, getMyProgress);
 
 module.exports = router;
