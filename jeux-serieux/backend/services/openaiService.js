@@ -115,6 +115,27 @@ Format : { "questions": [ ...${count} défis... ] }`;
   if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
     throw new Error('Structure JSON invalide retournée par Groq (questions manquantes)');
   }
+
+  // ── Garantie : CHAQUE question a un indice non vide ───────────────────────────
+  // Le modèle omet parfois le champ "hint" : on fournit alors un indice de secours
+  // adapté à l'objectif pédagogique, pour que l'indice s'affiche toujours côté élève.
+  const FALLBACK_HINTS = {
+    comprehension: "Repense à ce qui se passe dans l'histoire et à l'ordre des événements.",
+    lexique:       "Pense au sens du mot dans le contexte de l'histoire.",
+    conjugaison:   "Observe bien le temps et la personne du verbe.",
+    grammaire:     "Regarde la nature des mots et les accords dans la phrase.",
+    orthographe:   "Relis attentivement le mot, lettre par lettre.",
+    mixte:         "Relis l'histoire et concentre-toi sur les détails.",
+  };
+  const fallbackHint = FALLBACK_HINTS[objective] || FALLBACK_HINTS.comprehension;
+  parsed.questions = parsed.questions.map((q) => ({
+    ...q,
+    hint:
+      typeof q.hint === 'string' && q.hint.trim().length > 0
+        ? q.hint.trim()
+        : fallbackHint,
+  }));
+
   return parsed;
 }
 

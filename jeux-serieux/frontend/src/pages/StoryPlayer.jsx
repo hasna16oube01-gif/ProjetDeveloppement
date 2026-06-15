@@ -319,11 +319,11 @@ export default function StoryPlayer() {
                 </div>
 
                 {/* Indice (1re tentative seulement) */}
-                {!isSecondAttempt && currentQ.hint && (
+                {!isSecondAttempt && (
                   <div className="mt-5">
                     {revealedHints[currentQuestion] ? (
                       <div className="rounded-2xl p-4" style={{ background: 'rgba(250,204,21,0.12)', border: '1px solid rgba(250,204,21,0.4)' }}>
-                        <p className="font-bold text-yellow-200 text-sm">💡 {currentQ.hint}</p>
+                        <p className="font-bold text-yellow-200 text-sm">💡 {currentQ.hint || "Relis bien l'histoire et observe les détails."}</p>
                         <p className="text-xs text-[var(--text-muted)] mt-1 italic">Cette question compte pour la moitié des points.</p>
                       </div>
                     ) : (

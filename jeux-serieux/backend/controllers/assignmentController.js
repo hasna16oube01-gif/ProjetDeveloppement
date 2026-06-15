@@ -117,7 +117,13 @@ exports.getAssignmentById = async (req, res) => {
       const stripped = { type: q.type, question: q.question };
       if (q.options) stripped.options = q.options;
       if (q.events)  stripped.events  = q.events;
-      if (q.hint)    stripped.hint    = q.hint;
+      // L'indice est toujours transmis à l'élève. Si une ancienne assignation n'en
+      // a pas (champ optionnel ajouté plus tard), on envoie un indice générique
+      // afin que le bloc "indice" s'affiche toujours côté élève.
+      stripped.hint =
+        typeof q.hint === 'string' && q.hint.trim().length > 0
+          ? q.hint.trim()
+          : "Relis bien l'histoire et observe les détails.";
       return stripped;
     });
     return res.json(safe);
