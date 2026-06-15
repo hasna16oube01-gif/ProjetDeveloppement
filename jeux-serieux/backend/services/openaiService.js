@@ -62,69 +62,60 @@ Retourne UNIQUEMENT ce JSON :
 }
 
 // ── 2) DÉFIS : génère 5 défis ORIENTÉS selon l'objectif du prof ───────────────
-async function generateChallenges(narratedText, title, objective = 'comprehension') {
+async function generateChallenges(narratedText, title, objective = 'comprehension', options = {}) {
   const guidance = OBJECTIVE_GUIDANCE[objective] || OBJECTIVE_GUIDANCE.comprehension;
+  const ALL_TYPES = ['mcq', 'true_false', 'fill_blank', 'order_events', 'odd_one_out'];
+
+  const count = Math.min(Math.max(parseInt(options.count) || 5, 1), 10);
+  let types = Array.isArray(options.types) ? options.types.filter((t) => ALL_TYPES.includes(t)) : [];
+  if (types.length === 0) types = ALL_TYPES;
+
+  const TYPE_TEMPLATES = {
+    mcq:          `"mcq" — QCM : { "type": "mcq", "question": "...", "options": ["A","B","C","D"], "correctAnswer": 0, "hint": "...", "explanation": "..." }`,
+    true_false:   `"true_false" — Vrai/Faux : { "type": "true_false", "question": "...", "correctAnswer": true, "hint": "...", "explanation": "..." }`,
+    fill_blank:   `"fill_blank" — Texte à trous (UN mot = ___) : { "type": "fill_blank", "question": "... ___ ...", "options": ["a","b","c","d"], "correctAnswer": 0, "hint": "...", "explanation": "..." }`,
+    order_events: `"order_events" — Ordre (4 événements MÉLANGÉS) : { "type": "order_events", "question": "Remets dans l'ordre.", "events": ["B","D","A","C"], "correctOrder": [2,0,3,1], "hint": "...", "explanation": "..." }`,
+    odd_one_out:  `"odd_one_out" — L'intrus : { "type": "odd_one_out", "question": "Quel mot est l'intrus ?", "options": ["m1","m2","m3","intrus"], "correctAnswer": 3, "hint": "...", "explanation": "..." }`,
+  };
+  const templates = types.map((t) => '- ' + TYPE_TEMPLATES[t]).join('\n');
 
   const prompt = `Tu es un expert en pédagogie pour enfants de 6 à 11 ans.
 
-Histoire "${title}" (c'est CE texte que l'enfant a écouté/lu) :
+Histoire "${title}" (texte écouté par l'enfant) :
 ---
 ${narratedText}
 ---
 
-OBJECTIF PÉDAGOGIQUE CHOISI PAR LE PROFESSEUR : "${objective}"
+OBJECTIF PÉDAGOGIQUE : "${objective}"
 CONSIGNE D'OBJECTIF : ${guidance}
 
-TÂCHE — Génère exactement 5 défis variés, UN de chaque type, et oriente leur CONTENU vers l'objectif ci-dessus.
+TÂCHE — Génère EXACTEMENT ${count} défis, en utilisant UNIQUEMENT ces types (tu peux répéter un type pour atteindre ${count}, en variant les questions) :
+${templates}
 
-TYPE 1 "mcq" — QCM classique :
-{ "type": "mcq", "question": "...", "options": ["A","B","C","D"], "correctAnswer": 0, "explanation": "..." }
+CHAQUE défi DOIT inclure un champ "hint" : un indice COURT (1 phrase) qui aide sans donner la réponse.
 
-TYPE 2 "true_false" — Vrai ou Faux :
-{ "type": "true_false", "question": "...", "correctAnswer": true, "explanation": "..." }
+RÈGLES :
+- Le contenu des questions ET des indices reflète l'objectif "${objective}".
+- Pour order_events : 'events' mélangés, correctOrder = indices dans l'ordre chronologique.
+- Tout en français, pour enfants de 6-11 ans. Retourne UNIQUEMENT le JSON.
 
-TYPE 3 "fill_blank" — Texte à trous (UN mot manquant = ___) :
-{ "type": "fill_blank", "question": "Le héros traversa la ___ pour rentrer.", "options": ["forêt","mer","montagne","ville"], "correctAnswer": 0, "explanation": "..." }
-
-TYPE 4 "order_events" — Ordre chronologique (4 événements MÉLANGÉS) :
-{ "type": "order_events", "question": "Remets ces événements dans le bon ordre.", "events": ["Evt B","Evt D","Evt A","Evt C"], "correctOrder": [2,0,3,1], "explanation": "..." }
-
-TYPE 5 "odd_one_out" — L'intrus :
-{ "type": "odd_one_out", "question": "Quel mot n'a aucun rapport avec cette histoire ?", "options": ["mot1","mot2","mot3","intrus"], "correctAnswer": 3, "explanation": "..." }
-
-RÈGLES IMPORTANTES :
-- Le CONTENU des questions doit refléter l'objectif "${objective}" (voir la consigne d'objectif)
-- Les 'events' de order_events doivent être mélangés (PAS dans l'ordre chronologique)
-- correctOrder contient les indices du tableau events dans le bon ordre chronologique
-- Tous les textes en français, adaptés à des enfants de 6-11 ans
-- Retourne UNIQUEMENT le JSON, sans texte autour
-
-Format de retour :
-{
-  "questions": [ ...5 défis dans l'ordre mcq, true_false, fill_blank, order_events, odd_one_out... ]
-}`;
+Format : { "questions": [ ...${count} défis... ] }`;
 
   const completion = await groq.chat.completions.create({
     messages: [
-      {
-        role: 'system',
-        content:
-          'Tu es un assistant pédagogique. Tu réponds UNIQUEMENT en JSON pur et valide, sans markdown, sans texte introductif.',
-      },
+      { role: 'system', content: 'Tu es un assistant pédagogique. Tu réponds UNIQUEMENT en JSON pur et valide, sans markdown.' },
       { role: 'user', content: prompt },
     ],
-    model:           'llama-3.3-70b-versatile',
+    model: 'llama-3.3-70b-versatile',
     response_format: { type: 'json_object' },
-    temperature:     0.7,
+    temperature: 0.7,
   });
 
   const parsed = JSON.parse(completion.choices[0].message.content);
-
   if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
     throw new Error('Structure JSON invalide retournée par Groq (questions manquantes)');
   }
-
-  return parsed; // { questions }
+  return parsed;
 }
 
 // ── Audio : géré côté client via Web Speech API ───────────────────────────────

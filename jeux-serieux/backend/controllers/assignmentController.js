@@ -5,9 +5,9 @@ const Progress   = require('../models/Progress');
 const { generateChallenges } = require('../services/openaiService');
 
 // ── Traitement IA en arrière-plan ─────────────────────────────────────────────
-async function generateQuestionsAsync(assignmentId, narratedText, title, objective) {
+async function generateQuestionsAsync(assignmentId, narratedText, title, objective, options) {
   try {
-    const { questions } = await generateChallenges(narratedText, title, objective);
+    const { questions } = await generateChallenges(narratedText, title, objective, options);
     await Assignment.findByIdAndUpdate(assignmentId, { questions, status: 'ready' });
     console.log(`✅ Assignment ${assignmentId} prêt (${questions.length} défis, objectif: ${objective})`);
   } catch (error) {
@@ -19,7 +19,7 @@ async function generateQuestionsAsync(assignmentId, narratedText, title, objecti
 // ── POST /api/assignments  (prof) ─────────────────────────────────────────────
 exports.createAssignment = async (req, res) => {
   try {
-    const { storyId, classId, objective, level } = req.body;
+    const { storyId, classId, objective, level, questionCount, questionTypes } = req.body;
     if (!storyId || !classId || !objective) {
       return res.status(400).json({ message: 'storyId, classId et objective sont requis' });
     }
@@ -33,17 +33,21 @@ exports.createAssignment = async (req, res) => {
     const cls = await Class.findOne({ _id: classId, teacher: req.user._id });
     if (!cls) return res.status(404).json({ message: 'Classe introuvable' });
 
+    const count = Math.min(Math.max(parseInt(questionCount) || 5, 1), 10);
+    const types = Array.isArray(questionTypes) && questionTypes.length ? questionTypes : undefined;
+
     const assignment = await Assignment.create({
       story:      storyId,
       classId,
       assignedBy: req.user._id,
       objective,
-      level:      level || 1,
-      status:     'processing',
+      level:         level || 1,
+      questionCount: count,
+      questionTypes: types,
+      status:        'processing',
     });
 
-    // Génération des défis sans bloquer la réponse
-    generateQuestionsAsync(assignment._id, story.narratedText, story.title, objective);
+    generateQuestionsAsync(assignment._id, story.narratedText, story.title, objective, { count, types });
 
     res.status(201).json({
       message: "Défis en cours de génération par l'IA...",
@@ -74,7 +78,7 @@ exports.getClassAssignments = async (req, res) => {
     const assignments = await Assignment.find({ classId: req.params.classId })
       .populate('story', 'title coverEmoji difficulty status')
       .sort({ level: 1, createdAt: -1 })
-      .select('-questions'); // questions réservées au détail
+      .select('-questions');
     res.json(assignments);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -82,8 +86,6 @@ exports.getClassAssignments = async (req, res) => {
 };
 
 // ── GET /api/assignments/:id  (prof OU élève) ─────────────────────────────────
-// Prof  → réponse complète (avec questions + bonnes réponses)
-// Élève → questions sans correctAnswer/correctOrder/explanation, si niveau débloqué
 exports.getAssignmentById = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
@@ -110,12 +112,12 @@ exports.getAssignmentById = async (req, res) => {
       return res.status(404).json({ message: 'Assignment non disponible' });
     }
 
-    // Masquer les bonnes réponses et explications
     const safe = assignment.toObject();
     safe.questions = safe.questions.map((q) => {
       const stripped = { type: q.type, question: q.question };
       if (q.options) stripped.options = q.options;
       if (q.events)  stripped.events  = q.events;
+      if (q.hint)    stripped.hint    = q.hint;
       return stripped;
     });
     return res.json(safe);
@@ -140,8 +142,6 @@ exports.deleteAssignment = async (req, res) => {
 };
 
 // ── GET /api/assignments/student  (élève) ─────────────────────────────────────
-// Renvoie les assignments ready+active de la classe de l'élève, groupés par level.
-// Niveaux verrouillés : locked:true, sans questions ni bonnes réponses.
 exports.getStudentAssignments = async (req, res) => {
   try {
     if (!req.user.classId) {
@@ -156,7 +156,6 @@ exports.getStudentAssignments = async (req, res) => {
       .populate('story', 'title coverEmoji difficulty')
       .sort({ level: 1, createdAt: -1 });
 
-    // Récupérer la progression de l'élève pour ces assignments
     const assignmentIds = assignments.map((a) => a._id);
     const progresses = await Progress.find({
       student:    req.user._id,
@@ -168,7 +167,6 @@ exports.getStudentAssignments = async (req, res) => {
 
     const unlockedLevel = req.user.level;
 
-    // Grouper par level
     const grouped = {};
     for (const a of assignments) {
       const lvl      = a.level;

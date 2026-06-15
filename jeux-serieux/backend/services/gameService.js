@@ -1,4 +1,4 @@
-const { STARS_THRESHOLDS } = require('../config/gameConfig');
+const { STARS_THRESHOLDS, SECOND_ATTEMPT_PENALTY } = require('../config/gameConfig');
 
 function gradeAnswer(question, selectedAnswer) {
   switch (question.type) {
@@ -9,12 +9,22 @@ function gradeAnswer(question, selectedAnswer) {
         JSON.stringify(selectedAnswer) === JSON.stringify(question.correctOrder)
       );
     case 'true_false':
-      // Les deux côtés doivent être booléens (JSON les préserve)
       return selectedAnswer === question.correctAnswer;
     // mcq, fill_blank, odd_one_out : selectedAnswer est un index (Number)
     default:
       return Number(selectedAnswer) === Number(question.correctAnswer);
   }
+}
+
+// Points d'une question selon l'indice utilisé et le numéro de tentative
+function computeQuestionPoints(question, selectedAnswer, hintUsed, attemptNumber) {
+  const isCorrect = gradeAnswer(question, selectedAnswer);
+  let points = 0;
+  if (isCorrect) {
+    if (attemptNumber >= 2) points = SECOND_ATTEMPT_PENALTY; // 2e tentative : moitié, pas d'indice
+    else points = hintUsed ? 0.5 : 1;                        // 1re tentative : indice -> moitié
+  }
+  return { isCorrect, points };
 }
 
 function computeStars(score) {
@@ -24,4 +34,4 @@ function computeStars(score) {
   return 0;
 }
 
-module.exports = { gradeAnswer, computeStars };
+module.exports = { gradeAnswer, computeQuestionPoints, computeStars };

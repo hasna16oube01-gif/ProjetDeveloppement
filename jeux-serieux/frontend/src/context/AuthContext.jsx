@@ -19,8 +19,9 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
+  // expectedRole : 'teacher' | 'student' selon l'espace choisi (optionnel)
+  const login = async (email, password, expectedRole) => {
+    const res = await api.post('/auth/login', { email, password, role: expectedRole });
     localStorage.setItem('token', res.data.token);
     setUser(res.data.user);
     return res.data.user;

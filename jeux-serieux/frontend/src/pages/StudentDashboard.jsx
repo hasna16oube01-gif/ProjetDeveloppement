@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Avatar from '../components/shared/Avatar';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -57,25 +58,29 @@ export default function StudentDashboard() {
 
         {/* Header */}
         <motion.div className="flex items-start justify-between mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-          <div>
-            <h1 className="text-4xl md:text-5xl font-fredoka font-bold text-[var(--text-strong)] drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]">
-              Bonjour, {user.name} !
-            </h1>
-            <div className="flex items-center gap-3 mt-3 flex-wrap">
-              <span className="inline-flex items-center gap-2 font-black px-4 py-2 rounded-full text-lg text-[#FCE9A6]"
-                style={{ background: 'rgba(250,204,21,0.14)', border: '1px solid rgba(250,204,21,0.40)' }}>
-                ⭐ {user.totalStars} étoiles
-              </span>
-              <span className="inline-flex items-center gap-2 font-black px-4 py-2 rounded-full text-lg text-[#C9BFF0]"
-                style={{ background: 'rgba(142,128,242,0.14)', border: '1px solid rgba(157,140,246,0.35)' }}>
-                🏆 Niveau {user.level}
-              </span>
-              {data && (
-                <span className="inline-flex items-center gap-2 font-bold px-4 py-2 rounded-full text-sm text-[#86efac]"
-                  style={{ background: 'rgba(52,211,153,0.10)', border: '1px solid rgba(52,211,153,0.35)' }}>
-                  {totalCompleted}/{allAssignments.length} terminés
+          <div className="flex items-center gap-4">
+            <Avatar src={user.avatar} size={76} className="ring-4 ring-yellow-400/70 shadow-lg shadow-yellow-500/20 flex-shrink-0" />
+            <div>
+              <h1 className="text-4xl md:text-5xl font-fredoka font-bold text-[var(--text-strong)] drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]">
+                Bonjour, {user.name} !
+              </h1>
+              <p className="text-[var(--text-muted)] font-fredoka font-semibold mt-1">🪄 Apprenti·e Magicien·ne</p>
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                <span className="inline-flex items-center gap-2 font-black px-4 py-2 rounded-full text-lg text-[#FCE9A6]"
+                  style={{ background: 'rgba(250,204,21,0.14)', border: '1px solid rgba(250,204,21,0.40)' }}>
+                  ⭐ {user.totalStars} étoiles
                 </span>
-              )}
+                <span className="inline-flex items-center gap-2 font-black px-4 py-2 rounded-full text-lg text-[#C9BFF0]"
+                  style={{ background: 'rgba(142,128,242,0.14)', border: '1px solid rgba(157,140,246,0.35)' }}>
+                  🏆 Niveau {user.level}
+                </span>
+                {data && (
+                  <span className="inline-flex items-center gap-2 font-bold px-4 py-2 rounded-full text-sm text-[#86efac]"
+                    style={{ background: 'rgba(52,211,153,0.10)', border: '1px solid rgba(52,211,153,0.35)' }}>
+                    {totalCompleted}/{allAssignments.length} terminés
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button onClick={logout} className="font-fredoka font-medium text-[#D7CFF2] px-4 py-2 rounded-full transition-all hover:brightness-110"

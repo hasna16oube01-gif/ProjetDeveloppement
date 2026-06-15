@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiLogIn, FiUserPlus, FiZap } from 'react-icons/fi';
-import { BsRobot } from 'react-icons/bs';
 import { FiBookOpen } from 'react-icons/fi';
 
 export default function LandingPage() {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import Avatar from '../components/shared/Avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip,
@@ -37,6 +38,9 @@ export default function TeacherDashboard() {
 
   // Preview histoire (modal narratedText)
   const [previewStory, setPreviewStory] = useState(null);
+
+  // Aperçu des défis d'un assignment
+  const [previewAssignment, setPreviewAssignment] = useState(null);
 
   // Dashboard prof
   const [dashClassId, setDashClassId]     = useState('');
@@ -106,6 +110,14 @@ export default function TeacherDashboard() {
     try {
       const res = await api.get(`/stories/${story._id}`);
       setPreviewStory(res.data);
+    } catch (e) { console.error(e); }
+  };
+
+  // ── Prévisualiser les défis d'un assignment ───────────────
+  const openAssignmentPreview = async (assignmentId) => {
+    try {
+      const res = await api.get(`/assignments/${assignmentId}`);
+      setPreviewAssignment(res.data);
     } catch (e) { console.error(e); }
   };
 
@@ -371,7 +383,7 @@ export default function TeacherDashboard() {
                       {cls.students.map((s) => (
                         <div key={s._id} className="flex items-center gap-2 rounded-xl p-2"
                           style={{ background: 'rgba(18,14,36,0.45)', border: '1px solid rgba(150,132,206,0.18)' }}>
-                          <span>{s.avatar}</span>
+                          <Avatar src={s.avatar} size={32} />
                           <span className="font-bold text-[var(--text-strong)]">{s.name}</span>
                           <span className="ml-auto text-yellow-300 font-bold text-sm">⭐ {s.totalStars}</span>
                         </div>
@@ -405,6 +417,9 @@ export default function TeacherDashboard() {
                                 <span className="text-xs text-[var(--text-muted)]">{OBJECTIVE_LABEL[a.objective]}</span>
                               </div>
                             </div>
+                            {a.status === 'ready' && (
+                              <button onClick={() => openAssignmentPreview(a._id)} className="text-[#9D8CF6] hover:text-white text-base flex-shrink-0" title="Voir les défis">👁</button>
+                            )}
                             <button onClick={() => deleteAssignment(cls._id, a._id)} className="text-red-300/70 hover:text-red-300 text-sm font-bold flex-shrink-0">🗑</button>
                           </div>
                         ))}
@@ -463,7 +478,7 @@ export default function TeacherDashboard() {
                           : { background: 'rgba(18,14,36,0.45)', border: '1px solid rgba(150,132,206,0.18)' }}
                         onClick={() => openRadar(student)}
                         whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                        <span className="text-3xl">{student.avatar}</span>
+                        <Avatar src={student.avatar} size={48} />
                         <div className="flex-1">
                           <p className="font-bold text-[var(--text-strong)]">{student.name}</p>
                           <div className="flex items-center gap-3 mt-1 flex-wrap text-xs font-bold">
@@ -536,6 +551,69 @@ export default function TeacherDashboard() {
       </AnimatePresence>
 
       {/* ══════════════════════════════════════════════
+          MODAL DÉFIS D'UN ASSIGNMENT
+      ══════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {previewAssignment && (
+          <motion.div className="fixed inset-0 bg-black/55 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={(e) => e.target === e.currentTarget && setPreviewAssignment(null)}>
+            <motion.div className="rounded-3xl shadow-2xl w-full max-w-xl max-h-[85vh] overflow-y-auto p-6"
+              style={{ background: 'rgba(28,22,50,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(173,156,224,0.22)' }}
+              initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-fredoka font-semibold text-[var(--text-strong)]">
+                    {previewAssignment.story?.coverEmoji} {previewAssignment.story?.title}
+                  </h2>
+                  <p className="text-[var(--text-muted)] text-sm font-semibold">
+                    🎯 {OBJECTIVE_LABEL[previewAssignment.objective]} · {previewAssignment.questions?.length || 0} défis
+                  </p>
+                </div>
+                <button onClick={() => setPreviewAssignment(null)} className="text-[#B9AEE0] hover:text-white font-black text-xl w-9 h-9 flex items-center justify-center rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}>✕</button>
+              </div>
+
+              <div className="space-y-3">
+                {(previewAssignment.questions || []).map((q, i) => (
+                  <div key={i} className="rounded-2xl p-4" style={{ background: 'rgba(18,14,36,0.45)', border: '1px solid rgba(150,132,206,0.22)' }}>
+                    <p className="font-bold text-[var(--text-strong)] mb-2 text-sm">
+                      {i + 1}. <span className="text-[#9D8CF6]">[{q.type}]</span> {q.question}
+                    </p>
+                    {q.options && (
+                      <div className="flex flex-wrap gap-2 mb-1">
+                        {q.options.map((opt, j) => (
+                          <span key={j} className="text-xs px-2 py-1 rounded-full font-bold"
+                            style={j === q.correctAnswer
+                              ? { background: 'rgba(52,211,153,0.18)', border: '1px solid rgba(52,211,153,0.35)', color: '#86efac' }
+                              : { background: 'rgba(18,14,36,0.55)', border: '1px solid rgba(150,132,206,0.22)', color: 'var(--text-muted)' }}>
+                            {j === q.correctAnswer ? '✓ ' : ''}{opt}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {q.type === 'true_false' && (
+                      <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(52,211,153,0.18)', border: '1px solid rgba(52,211,153,0.35)', color: '#86efac' }}>
+                        ✓ {q.correctAnswer ? 'Vrai' : 'Faux'}
+                      </span>
+                    )}
+                    {q.type === 'order_events' && q.events && (
+                      <p className="text-xs text-[var(--text-muted)]">Ordre : {q.correctOrder?.map((idx) => q.events[idx]).join(' → ')}</p>
+                    )}
+                    {q.hint && <p className="text-xs text-yellow-200/80 mt-1">💡 Indice : {q.hint}</p>}
+                    {q.explanation && <p className="text-xs text-[var(--text-muted)] mt-1 italic">📝 {q.explanation}</p>}
+                  </div>
+                ))}
+                {(!previewAssignment.questions || previewAssignment.questions.length === 0) && (
+                  <p className="text-center text-[var(--text-muted)] py-6">Aucun défi (génération en cours ou erreur).</p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══════════════════════════════════════════════
           MODAL RADAR ÉLÈVE
       ══════════════════════════════════════════════ */}
       <AnimatePresence>
@@ -548,7 +626,7 @@ export default function TeacherDashboard() {
               initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}>
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">{radarStudent.avatar}</span>
+                  <Avatar src={radarStudent.avatar} size={44} />
                   <div>
                     <h2 className="text-xl font-fredoka font-bold text-[var(--text-strong)]">{radarStudent.name}</h2>
                     <p className="text-[var(--text-muted)] text-sm">Radar des compétences</p>
@@ -584,20 +662,34 @@ export default function TeacherDashboard() {
   );
 }
 
-// ─── Modal d'assignation (nouvelle version) ──────────────────────────────────
+// ─── Modal d'assignation (nombre + types de questions) ───────────────────────
 function AssignmentModal({ story, classes, onSuccess, onClose }) {
-  const [classId, setClassId]     = useState('');
-  const [objective, setObjective] = useState('comprehension');
-  const [level, setLevel]         = useState(1);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]         = useState('');
+  const ALL_TYPES = [
+    { id: 'mcq',          label: '🤔 QCM' },
+    { id: 'true_false',   label: '⚖️ Vrai/Faux' },
+    { id: 'fill_blank',   label: '🔤 Texte à trous' },
+    { id: 'order_events', label: '⏳ Remettre en ordre' },
+    { id: 'odd_one_out',  label: "🕵️ L'intrus" },
+  ];
+
+  const [classId, setClassId]             = useState('');
+  const [objective, setObjective]         = useState('comprehension');
+  const [level, setLevel]                 = useState(1);
+  const [questionCount, setQuestionCount] = useState(5);
+  const [questionTypes, setQuestionTypes] = useState(ALL_TYPES.map((t) => t.id));
+  const [submitting, setSubmitting]       = useState(false);
+  const [error, setError]                 = useState('');
+
+  const toggleType = (id) =>
+    setQuestionTypes((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
 
   const handleSubmit = async () => {
     if (!classId) { setError('Sélectionne une classe.'); return; }
+    if (questionTypes.length === 0) { setError('Choisis au moins un type de question.'); return; }
     setSubmitting(true); setError('');
     try {
-      await api.post('/assignments', { storyId: story._id, classId, objective, level });
-      onSuccess(`✅ Assignment créé ! L'IA génère les défis en arrière-plan…`);
+      await api.post('/assignments', { storyId: story._id, classId, objective, level, questionCount, questionTypes });
+      onSuccess(`✅ Assignment créé ! L'IA génère ${questionCount} défis en arrière-plan…`);
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur lors de la création');
     } finally {
@@ -646,10 +738,43 @@ function AssignmentModal({ story, classes, onSuccess, onClose }) {
         <div>
           <label className="block font-bold text-[#CFC6EC] mb-2">🎯 Objectif pédagogique</label>
           <select className="input-field" value={objective} onChange={(e) => setObjective(e.target.value)}>
-            {OBJECTIVES.map((o) => (
-              <option key={o} value={o}>{OBJECTIVE_LABEL[o]}</option>
-            ))}
+            {OBJECTIVES.map((o) => (<option key={o} value={o}>{OBJECTIVE_LABEL[o]}</option>))}
           </select>
+        </div>
+
+        {/* Nombre de défis */}
+        <div>
+          <label className="block font-bold text-[#CFC6EC] mb-2">🔢 Nombre de défis</label>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setQuestionCount((n) => Math.max(1, n - 1))}
+              className="w-10 h-10 rounded-xl font-bold text-xl flex items-center justify-center transition-all hover:brightness-110"
+              style={{ background: 'rgba(142,128,242,0.18)', border: '1px solid rgba(157,140,246,0.40)', color: '#D9D2F7' }}>−</button>
+            <span className="text-3xl font-fredoka font-bold text-[var(--text-strong)] w-12 text-center">{questionCount}</span>
+            <button type="button" onClick={() => setQuestionCount((n) => Math.min(10, n + 1))}
+              className="w-10 h-10 rounded-xl font-bold text-xl flex items-center justify-center transition-all hover:brightness-110"
+              style={{ background: 'rgba(142,128,242,0.18)', border: '1px solid rgba(157,140,246,0.40)', color: '#D9D2F7' }}>+</button>
+            <span className="text-xs text-[var(--text-muted)]">(1 à 10)</span>
+          </div>
+        </div>
+
+        {/* Types de questions */}
+        <div>
+          <label className="block font-bold text-[#CFC6EC] mb-2">🧩 Types de questions</label>
+          <div className="flex flex-wrap gap-2">
+            {ALL_TYPES.map((t) => {
+              const active = questionTypes.includes(t.id);
+              return (
+                <button key={t.id} type="button" onClick={() => toggleType(t.id)}
+                  className="px-3 py-2 rounded-full text-sm font-bold transition-all"
+                  style={active
+                    ? { background: 'rgba(157,140,246,0.20)', border: '2px solid #9D8CF6', color: '#E7E0FA' }
+                    : { background: 'rgba(18,14,36,0.45)', border: '1px solid rgba(150,132,206,0.25)', color: '#A99FCB' }}>
+                  {active ? '✓ ' : ''}{t.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-[var(--text-muted)] mt-1">L'IA n'utilisera que les types sélectionnés.</p>
         </div>
 
         {/* Niveau */}
@@ -682,7 +807,7 @@ function AssignmentModal({ story, classes, onSuccess, onClose }) {
         </button>
         <motion.button onClick={handleSubmit} disabled={submitting || !classId}
           className="flex-1 btn-primary" whileTap={{ scale: 0.95 }}>
-          {submitting ? '⏳ Création…' : '✅ Créer l\'assignment'}
+          {submitting ? '⏳ Création…' : "✅ Créer l'assignment"}
         </motion.button>
       </div>
     </div>

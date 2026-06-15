@@ -3,31 +3,34 @@ import { useAuth } from '../context/AuthContext';
 import { useState } from "react";
 import {
   FiLock, FiEye, FiEyeOff, FiUser, FiZap, FiBookOpen,
-  FiHash, FiUserPlus, FiBarChart2, FiShield, FiChevronLeft,
+  FiUserPlus, FiBarChart2, FiShield, FiChevronLeft,
 } from "react-icons/fi";
-import { BsRobot } from "react-icons/bs";
 
 export default function LoginPage() {
   const [selected, setSelected] = useState(null); // null | 'teacher' | 'student'
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+
   const [teacherEmail, setTeacherEmail] = useState("");
   const [teacherPassword, setTeacherPassword] = useState("");
-  const [classCode, setClassCode] = useState("");
-  const [studentName, setStudentName] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
+  const [studentPassword, setStudentPassword] = useState("");
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const openCard = (role) => { setSelected(role); setError(''); setShowPassword(false); };
+  const backToCards = () => { setSelected(null); setError(''); };
+
   const handleTeacherLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const user = await login(teacherEmail, teacherPassword);
-      navigate(user.role === 'teacher' ? '/teacher' : '/student');
+      await login(teacherEmail, teacherPassword, 'teacher'); // rôle attendu = teacher
+      navigate('/teacher');
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur de connexion');
     } finally {
@@ -35,9 +38,18 @@ export default function LoginPage() {
     }
   };
 
-  const handleStudentJoin = (e) => {
+  const handleStudentLogin = async (e) => {
     e.preventDefault();
-    console.log("Student join:", { classCode, studentName });
+    setError('');
+    setLoading(true);
+    try {
+      await login(studentEmail, studentPassword, 'student'); // rôle attendu = student
+      navigate('/student');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Erreur de connexion');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -90,7 +102,7 @@ export default function LoginPage() {
             {!selected && (
               <div className="space-y-4">
                 <button
-                  onClick={() => setSelected('teacher')}
+                  onClick={() => openCard('teacher')}
                   className="w-full text-left backdrop-blur-xl bg-white/10 hover:bg-white/20 border border-white/20 rounded-3xl p-6 flex items-center gap-5 transition-all duration-200"
                 >
                   <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -105,7 +117,7 @@ export default function LoginPage() {
                 </button>
 
                 <button
-                  onClick={() => setSelected('student')}
+                  onClick={() => openCard('student')}
                   className="w-full text-left backdrop-blur-xl bg-white/10 hover:bg-white/20 border border-white/20 rounded-3xl p-6 flex items-center gap-5 transition-all duration-200"
                 >
                   <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -113,7 +125,7 @@ export default function LoginPage() {
                   </div>
                   <div>
                     <h2 className="text-white font-bold text-xl mb-1">Espace Élève</h2>
-                    <p className="text-white/65 text-sm">Rejoignez votre classe et vivez<br />l'aventure des histoires.</p>
+                    <p className="text-white/65 text-sm">Connecte-toi pour rejoindre ta classe<br />et vivre l'aventure des histoires.</p>
                   </div>
                 </button>
               </div>
@@ -123,7 +135,7 @@ export default function LoginPage() {
             {selected === 'teacher' && (
               <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8">
                 <button
-                  onClick={() => { setSelected(null); setError(''); }}
+                  onClick={backToCards}
                   className="flex items-center gap-1 text-white/60 hover:text-white text-sm mb-5 transition-all"
                 >
                   <FiChevronLeft className="w-4 h-4" />
@@ -138,6 +150,7 @@ export default function LoginPage() {
                       placeholder="Adresse e-mail"
                       value={teacherEmail}
                       onChange={(e) => setTeacherEmail(e.target.value)}
+                      required
                       className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                     />
                   </div>
@@ -148,20 +161,13 @@ export default function LoginPage() {
                       placeholder="Mot de passe"
                       value={teacherPassword}
                       onChange={(e) => setTeacherPassword(e.target.value)}
+                      required
                       className="w-full pl-11 pr-11 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition">
                       {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                     </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-sm text-white/60 cursor-pointer">
-                      <input type="checkbox" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)}
-                        className="w-4 h-4 rounded border-white/30 bg-white/10" />
-                      Se souvenir de moi
-                    </label>
-                    <button type="button" className="text-sm text-indigo-300 hover:underline">Mot de passe oublié ?</button>
                   </div>
                   {error && <p className="text-red-400 text-sm text-center">❌ {error}</p>}
                   <button type="submit" disabled={loading}
@@ -176,7 +182,6 @@ export default function LoginPage() {
                   <div className="flex-1 h-px bg-white/15" />
                 </div>
 
-                {/* Créer un compte enseignant */}
                 <button
                   onClick={() => navigate('/register')}
                   className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all"
@@ -187,41 +192,48 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* STEP 2 — Student form */}
+            {/* STEP 2 — Student form (email + mot de passe) */}
             {selected === 'student' && (
               <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8">
                 <button
-                  onClick={() => setSelected(null)}
+                  onClick={backToCards}
                   className="flex items-center gap-1 text-white/60 hover:text-white text-sm mb-5 transition-all"
                 >
                   <FiChevronLeft className="w-4 h-4" />
                   Connexion à l'espace élève
                 </button>
 
-                <form onSubmit={handleStudentJoin} className="space-y-4">
-                  <div className="relative">
-                    <FiHash className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Code de classe"
-                      value={classCode}
-                      onChange={(e) => setClassCode(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                    />
-                  </div>
+                <form onSubmit={handleStudentLogin} className="space-y-4">
                   <div className="relative">
                     <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
                     <input
-                      type="text"
-                      placeholder="Ton prénom"
-                      value={studentName}
-                      onChange={(e) => setStudentName(e.target.value)}
+                      type="email"
+                      placeholder="Adresse e-mail"
+                      value={studentEmail}
+                      onChange={(e) => setStudentEmail(e.target.value)}
+                      required
                       className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                     />
                   </div>
-                  <button type="submit"
+                  <div className="relative">
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Mot de passe"
+                      value={studentPassword}
+                      onChange={(e) => setStudentPassword(e.target.value)}
+                      required
+                      className="w-full pl-11 pr-11 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition">
+                      {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {error && <p className="text-red-400 text-sm text-center">❌ {error}</p>}
+                  <button type="submit" disabled={loading}
                     className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-900/40 mt-1">
-                    Rejoindre ma classe
+                    {loading ? '⏳ Connexion...' : 'Se connecter'}
                   </button>
                 </form>
 
@@ -231,7 +243,6 @@ export default function LoginPage() {
                   <div className="flex-1 h-px bg-white/15" />
                 </div>
 
-                {/* Créer un compte pour les élèves qui n'en ont pas encore */}
                 <button
                   onClick={() => navigate('/register')}
                   className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all"
@@ -245,51 +256,34 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* FOOTER */}
+      {/* FOOTER (chatbot supprimé) */}
       <footer className="relative z-10 mx-4 mb-4 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-white/10 px-6 py-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-7xl mx-auto">
-          <div className="flex flex-wrap gap-6 flex-1">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-purple-600/30 flex items-center justify-center flex-shrink-0">
-                <FiZap className="text-purple-400 w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm">IA Narrative</p>
-                <p className="text-slate-400 text-xs leading-tight">Des histoires captivantes<br />générées par l'IA.</p>
-              </div>
+        <div className="flex flex-wrap gap-6 max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-600/30 flex items-center justify-center flex-shrink-0">
+              <FiZap className="text-purple-400 w-5 h-5" />
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-orange-500/30 flex items-center justify-center flex-shrink-0">
-                <FiBarChart2 className="text-orange-400 w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm">Défis Adaptatifs</p>
-                <p className="text-slate-400 text-xs leading-tight">Des activités variées<br />et adaptées à chaque élève.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-green-500/30 flex items-center justify-center flex-shrink-0">
-                <FiShield className="text-green-400 w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm">Apprentissage Progressif</p>
-                <p className="text-slate-400 text-xs leading-tight">Des niveaux et des parcours<br />pour progresser à son rythme.</p>
-              </div>
+            <div>
+              <p className="text-white font-bold text-sm">IA Narrative</p>
+              <p className="text-slate-400 text-xs leading-tight">Des histoires captivantes<br />générées par l'IA.</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-right">
-              <p className="text-white text-sm font-medium">Une question ?</p>
-              <p className="text-slate-300 text-xs">Je suis Lumi, ton assistant IA !</p>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-orange-500/30 flex items-center justify-center flex-shrink-0">
+              <FiBarChart2 className="text-orange-400 w-5 h-5" />
             </div>
-            <div className="relative animate-bounce">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/50">
-                <BsRobot className="text-white w-7 h-7" />
-              </div>
-              <div className="absolute -top-8 -left-20 bg-white rounded-xl px-2 py-1 text-xs text-slate-700 font-medium shadow-md whitespace-nowrap">
-                Je suis Lumi ! 👋
-                <div className="absolute bottom-[-6px] right-3 w-3 h-3 bg-white rotate-45" />
-              </div>
+            <div>
+              <p className="text-white font-bold text-sm">Défis Adaptatifs</p>
+              <p className="text-slate-400 text-xs leading-tight">Des activités variées<br />et adaptées à chaque élève.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-green-500/30 flex items-center justify-center flex-shrink-0">
+              <FiShield className="text-green-400 w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm">Apprentissage Progressif</p>
+              <p className="text-slate-400 text-xs leading-tight">Des niveaux et des parcours<br />pour progresser à son rythme.</p>
             </div>
           </div>
         </div>

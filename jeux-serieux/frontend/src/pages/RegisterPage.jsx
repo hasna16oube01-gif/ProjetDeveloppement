@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen } from 'react-icons/fi';
-import { BsRobot } from 'react-icons/bs';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const AVATARS = [
   '/av1.png', '/av2.png', '/av3.png', '/av4.png', '/av5.png',
@@ -15,7 +14,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [avatarPage, setAvatarPage] = useState(0); // 0 = first 8, pagination arrows
+  const [avatarPage, setAvatarPage] = useState(0);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -33,7 +32,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Show 4 avatars per page → 3 pages for 10 avatars (4 / 4 / 2)
   const perPage = 4;
   const totalPages = Math.ceil(AVATARS.length / perPage);
   const visibleAvatars = AVATARS.slice(avatarPage * perPage, avatarPage * perPage + perPage);
@@ -93,12 +91,11 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          {/* Avatar Picker */}
+          {/* Avatar Picker (élève uniquement) */}
           {form.role === 'student' && (
             <div className="mb-5">
               <p className="text-white text-center font-semibold mb-3">Choisis ton avatar</p>
               <div className="relative flex items-center gap-2">
-                {/* Prev */}
                 <button
                   type="button"
                   onClick={() => setAvatarPage((p) => Math.max(0, p - 1))}
@@ -119,9 +116,7 @@ export default function RegisterPage() {
                           ? 'ring-2 ring-yellow-400 scale-105 shadow-lg shadow-yellow-500/30'
                           : 'opacity-75 hover:opacity-100'
                       }`}
-                      style={{
-                        background: 'rgba(255,255,255,0.07)',
-                      }}
+                      style={{ background: 'rgba(255,255,255,0.07)' }}
                     >
                       <img src={av} alt="avatar" className="w-full h-full object-cover" />
                       {form.avatar === av && (
@@ -131,7 +126,6 @@ export default function RegisterPage() {
                   ))}
                 </div>
 
-                {/* Next */}
                 <button
                   type="button"
                   onClick={() => setAvatarPage((p) => Math.min(totalPages - 1, p + 1))}
@@ -146,7 +140,6 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Name */}
             <div className="relative">
               <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
               <input
@@ -158,7 +151,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Email */}
             <div className="relative">
               <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
               <input
@@ -171,7 +163,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="relative">
               <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
               <input
@@ -196,7 +187,6 @@ export default function RegisterPage() {
               <p className="text-red-400 text-sm text-center font-medium">❌ {error}</p>
             )}
 
-            {/* Submit */}
             <motion.button
               type="submit"
               disabled={loading}
@@ -220,22 +210,6 @@ export default function RegisterPage() {
           </p>
         </div>
       </motion.div>
-
-      {/* ── LUMI ROBOT ── */}
-      <div className="absolute bottom-6 right-6 z-10 flex items-end gap-3">
-        <div className="bg-white rounded-2xl px-3 py-2 text-slate-700 text-xs font-medium shadow-lg relative">
-          Une question ? Je suis là !
-          <div className="absolute bottom-3 right-[-8px] w-4 h-4 bg-white rotate-45" />
-        </div>
-        <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-xl">
-            <BsRobot className="text-white w-8 h-8" />
-          </div>
-        </motion.div>
-      </div>
     </div>
   );
 }
